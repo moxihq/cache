@@ -1,0 +1,89 @@
+# How long a Codex or OpenCode prompt cache counts as warm after the last request, keyed
+# on harness, provider and model. Read by `moxi_cache.table`; every Codex and OpenCode
+# read looks its lifetime up here. Claude reads do not use this table.
+#
+# A row needs a source that promises its number: the provider's own documentation in
+# `source`, or a maintainers' ruling in `ruling`. A measurement alone never makes a row.
+# `evidence` cites a measurement on a route the source does not name. A model with no row
+# has no clock to count by and reads `no-cache`. A row with `charge = "free"` has no clock
+# either: a read whose next request runs on one of its models is `no-cache` at any age.
+#
+# Adding or changing a row: edit this file and the test that pins the shipped rows
+# (`tests/test_table.py`, the shipped-rows pin) in the same commit. `seconds` is the
+# shortest lifetime the source documents over every cache option the harness can be
+# configured to send. A user adds a model in cache's own config, in this schema; a user
+# row never overrides a row here.
+#
+# Keys: harness (codex | opencode), provider (the id the harness records), models (exact
+# ids, or ["*"] where the source documents one lifetime for every model of the
+# provider), seconds or charge, anchor (last-use | request-start; read by people, not by
+# the clock), source, checked, evidence, ruling, note; on a measured row also floor (the
+# documented minimum) and measured = true, which lets a learning drift store lower the
+# row when a read sees a cache go cold sooner, never below the floor.
+
+# Codex on the model a long probe placed: the probe's measured number, by ruling, lowered
+# by what later reads observe and never below OpenAI's documented 30 minutes. The number
+# is the longest gap at which every session on the model read warm, and at every shorter
+# gap of the probe: for gpt-5.6-sol, 90 minutes (2 of 2 warm in the long probe and 2 of 2
+# the day before; 1 of 2 cold at 120). gpt-6-astra was cold at the probe's 90-minute gap,
+# so no number was placed for it and it stays on the 30-minute row below.
+[[lifetime]]
+harness  = "codex"
+provider = "openai"
+models   = ["gpt-5.6-sol"]
+seconds  = 5400
+floor    = 1800
+measured = true
+anchor   = "last-use"
+source   = "https://developers.openai.com/api/docs/guides/prompt-caching"
+checked  = 2026-10-06
+evidence = "long cache probe of 2026-10-06 (gpt-5.6-sol warm at 90 min 2 of 2, cold at 120 min 1 of 2), and the probe of 2026-10-05 (warm at 90 min 2 of 2)"
+ruling   = "maintainers' ruling of 2026-10-06: count the measured number on the measured model"
+note     = "Measured on a ChatGPT-login route; the floor is OpenAI's documented minimum for GPT-5.6 and later."
+
+[[lifetime]]
+harness  = "codex"
+provider = "openai"
+models   = ["gpt-5.6-terra", "gpt-5.6-luna", "gpt-6-astra"]
+seconds  = 1800
+anchor   = "last-use"
+source   = "https://developers.openai.com/api/docs/guides/prompt-caching"
+checked  = 2026-10-06
+evidence = "gpt-6-astra: the probe of 2026-10-05, warm on the ChatGPT route at 5 to 65 min; the long probe of 2026-10-06 placed no measured number for it (cold at 90 min, warm at 120, one session per gap)"
+ruling   = "maintainers' ruling of 2026-10-06: OpenAI's documented minimum for the unmeasured GPT-5.6 and later models"
+note     = "GPT-5.6 and later: 30m is the only value and the minimum. The ruling covers terra and luna, which were not measured on the ChatGPT route before the long probe; the evidence covers astra."
+
+[[lifetime]]
+harness  = "opencode"
+provider = "openai"
+models   = ["gpt-5.6-sol", "gpt-6-astra", "gpt-5.6-terra", "gpt-5.6-luna"]
+seconds  = 1800
+anchor   = "last-use"
+source   = "https://developers.openai.com/api/docs/guides/prompt-caching"
+checked  = 2026-10-05
+evidence = "the probe of 2026-10-05: the Codex measurement on the same ChatGPT backend, for gpt-5.6-sol and gpt-6-astra"
+ruling   = "maintainers' ruling of 2026-10-06: OpenAI's documented minimum for the unmeasured GPT-5.6 and later models"
+note     = "OpenCode sends promptCacheKey and no retention option. A ChatGPT login posts to chatgpt.com/backend-api/codex under the same provider id; the evidence covers sol and astra, the ruling terra and luna."
+
+[[lifetime]]
+harness  = "opencode"
+provider = "anthropic"
+models   = ["*"]
+seconds  = 300
+anchor   = "request-start"
+source   = "https://platform.claude.com/docs/en/build-with-claude/prompt-caching"
+checked  = 2026-10-05
+evidence = ""
+ruling   = ""
+note     = "OpenCode sends ephemeral cache control with no ttl, so Anthropic's 5-minute default, counted from the start of the request; 5 minutes is the shorter of its two options."
+
+[[lifetime]]
+harness  = "opencode"
+provider = "opencode"
+models   = ["big-pickle", "space-bunny-free"]
+charge   = "free"
+source   = "https://opencode.ai/docs/zen/"
+checked  = 2026-10-06
+evidence = "OpenCode's copy of Zen's price list (models.json) prices input, output, cache read and cache write at 0 for both, read 2026-10-06"
+ruling   = "maintainers' ruling of 2026-10-06: a free model's cold cache costs nothing, so it is not counted"
+note     = "Free models: a cold cache costs nothing, so cache does not count it."

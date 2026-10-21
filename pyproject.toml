@@ -1,0 +1,39 @@
+[project]
+name = "moxi-cache"
+version = "0.1.0"
+description = "Know when a session's prompt cache goes cold, and act before it does."
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "CodeManEthan", email = "codemanethan@gmail.com" }]
+dependencies = ["moxi>=0.1,<0.2", "moxi-sessions>=0.1,<0.2"]
+
+[project.urls]
+Homepage = "https://github.com/moxihq/cache"
+Repository = "https://github.com/moxihq/cache"
+Issues = "https://github.com/moxihq/cache/issues"
+
+# Every Moxi distribution declares the umbrella, so a plain install puts `moxi` on PATH.
+[project.scripts]
+moxi = "moxi.cli:main"
+moxi-cache-watch = "moxi_cache.watch:main"
+
+# The module's one announcement, read by moxi.modules.
+[project.entry-points."moxi.modules"]
+cache = "moxi_cache.module"
+
+[dependency-groups]
+dev = ["pytest"]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/moxi_cache"]
+
+[tool.hatch.build.targets.sdist]
+# Paths that are never published stay out of a source distribution built from any branch.
+exclude = ["/CLAUDE.md", "/.public-paths", "/.residue-allow"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

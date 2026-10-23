@@ -14,7 +14,7 @@ newest tick that found the session live: it moves at every tick, read or not, so
 record whose `seen_at` stands still means the watcher has stopped, not that the session
 is idle. The file goes when the session leaves Claude Code's live list.
 
-**RULE C6a: a clock record carries every value a reader needs to render or judge it, so
+**A clock record carries every value a reader needs to render or judge it, so
 no reader takes a record's band or staleness from cache's config.** `warn_before` is the
 effective `segment.warn_before`: the band turns from warm to near at `ttl - warn_before`.
 `stale_after` is three times the watcher's effective tick (`watch.tick`, at least one
@@ -43,13 +43,13 @@ from moxi.paths import Layout
 
 #: The record format's version.
 VERSION = 1
-#: The two fields a reader renders and judges a record by (RULE C6a).
+#: The two fields a reader renders and judges a record by.
 THRESHOLDS = ("warn_before", "stale_after")
 #: Every field a record holds, in the order the watcher writes them.
 FIELDS = ("v", "session", "harness", "pid", "kind", "last_request", "ttl", "read_at",
           "seen_at", "code") + THRESHOLDS
-#: The fields every record holds; a record from a watcher older than RULE C6a lacks
-#: `THRESHOLDS`, and is still a record.
+#: The fields every record holds; a record an older watcher wrote, before records
+#: carried them, lacks `THRESHOLDS`, and is still a record.
 REQUIRED = FIELDS[:-len(THRESHOLDS)]
 #: `stale_after` is this many of the watcher's ticks.
 STALE_TICKS = 3

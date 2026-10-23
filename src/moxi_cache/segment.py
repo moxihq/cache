@@ -1,6 +1,6 @@
 """The status line segment: a session's cache age, read from its clock record.
 
-**RULE C6: the segment shows status and triggers nothing.** It reads one record and returns
+**The segment shows status and triggers nothing.** It reads one record and returns
 text. It starts no process, writes no file and asks nothing.
 
 `segment(session_id, now=None)` gives a `Segment` or None:
@@ -13,7 +13,7 @@ text. It starts no process, writes no file and asks nothing.
   ticks), which means the watcher has stopped. An idle session's record keeps its old
   `read_at`, stays bright while the watcher runs, and its age counts on.
 
-`warn_before` and `stale_after` are the record's own (RULE C6a, `records`): the watcher
+`warn_before` and `stale_after` are the record's own (`records`): the watcher
 writes them at every tick from cache's config, and the segment reads no config. None when
 there is no record, or its kind is neither `warm` nor `cold`, or it holds no last request
 or lifetime to count, or it lacks `warn_before` or `stale_after` (an older watcher wrote

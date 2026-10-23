@@ -1,6 +1,6 @@
 """The watcher, `moxi-cache-watch`: it keeps a clock record for every live Claude session.
 
-**RULE C5: the watcher writes what the clock read, for display and for the timer. No
+**The watcher writes what the clock read, for display and for the timer. No
 verdict is made from its records; a caller that decides about a cache calls `api.read`.**
 A record can lag the transcript by a tick, so it is not evidence.
 
@@ -20,7 +20,7 @@ At each tick (`watch.tick`, 10 s by default):
    left the live list. Every record it writes carries `warn_before` (the effective
    `segment.warn_before`) and `stale_after` (three times the effective tick), both in
    seconds, from the config as read at this tick, so a config change reaches every record
-   within one tick (RULE C6a). The tick that sets `stale_after` is the one the watcher
+   within one tick (`records`). The tick that sets `stale_after` is the one the watcher
    then waits, so a fresh record never shows dim.
 4. It runs the timer's work for the tick (`timer`) over the records it wrote.
 
@@ -387,7 +387,7 @@ def _interval(config: Config, watcher: Watcher) -> int:
 
 def _thresholds(config: Config, watcher: Watcher) -> int:
     """Read the config once for this tick: set what the tick writes into every record
-    (RULE C6a) and return the tick it then waits, the same read that set `stale_after`."""
+    and return the tick it then waits, the same read that set `stale_after`."""
     interval = _interval(config, watcher)
     watcher.warn_before = config.use("segment.warn_before")
     watcher.stale_after = records.STALE_TICKS * interval

@@ -392,7 +392,7 @@ def _timer_lines() -> list[str]:
 
 def _watcher_line(now: float | None = None) -> str:
     """How the watcher's records stand: none, fresh, or standing still. Each record is
-    judged stale by its own `stale_after` (RULE C6a), as the segment judges it."""
+    judged stale by its own `stale_after`, as the segment judges it."""
     directory = records.record_dir()
     found = []
     try:

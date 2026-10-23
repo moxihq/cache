@@ -1,7 +1,8 @@
 [project]
 name = "moxi-cache"
-version = "0.1.0"
+version = "0.1.1"
 description = "Know when a session's prompt cache goes cold, and act before it does."
+readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "CodeManEthan", email = "codemanethan@gmail.com" }]
@@ -32,8 +33,9 @@ build-backend = "hatchling.build"
 packages = ["src/moxi_cache"]
 
 [tool.hatch.build.targets.sdist]
-# Paths that are never published stay out of a source distribution built from any branch.
-exclude = ["/CLAUDE.md", "/.public-paths", "/.residue-allow"]
+# A source distribution built from any branch holds these public paths, and the
+# pyproject.toml and .gitignore hatchling adds itself.
+only-include = ["LICENSE", "README.md", "src/moxi_cache", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -153,7 +153,7 @@ def oc_read(db, sid=SID, *, turned=True, new_session=False, agent_model=BUILD_NU
 
 # ================================================================ the opencode reader
 
-def test_t14_anthropic_counts_5_minutes(tmp_path):
+def test_anthropic_counts_5_minutes(tmp_path):
     db = oc_db(tmp_path, model=("anthropic", "claude-sonnet-4"))
     db.request(SID, NOW - 299, "anthropic", "claude-sonnet-4")
     clock = oc_read(db)
@@ -166,7 +166,7 @@ def test_t14_anthropic_counts_5_minutes(tmp_path):
 
 @pytest.mark.parametrize("model", ["gpt-5.6-sol", "gpt-6-astra", "gpt-5.6-terra",
                                    "gpt-5.6-luna"])
-def test_t14_openai_counts_30_minutes_and_no_drift_lowers_it(tmp_path, model):
+def test_openai_counts_30_minutes_and_no_drift_lowers_it(tmp_path, model):
     for age, kind in ((1799, "warm"), (1800, "cold")):
         db = oc_db(tmp_path / str(age), model=("openai", model))
         db.request(SID, NOW - age, "openai", model)
@@ -176,7 +176,7 @@ def test_t14_openai_counts_30_minutes_and_no_drift_lowers_it(tmp_path, model):
 
 @pytest.mark.parametrize("model", ["big-pickle", "space-bunny-free"])
 @pytest.mark.parametrize("age", [0, 30 * 86400])
-def test_t14_a_free_next_pair_is_no_cache_at_any_age(tmp_path, model, age):
+def test_a_free_next_pair_is_no_cache_at_any_age(tmp_path, model, age):
     db = oc_db(tmp_path, model=("opencode", model))
     db.request(SID, NOW - age, "opencode", model)
     clock = oc_read(db)
@@ -186,7 +186,7 @@ def test_t14_a_free_next_pair_is_no_cache_at_any_age(tmp_path, model, age):
     assert clock.key == f"opencode opencode/{model} (free)"
 
 
-def test_t14_an_unknown_provider_reads_no_cache(tmp_path):
+def test_an_unknown_provider_reads_no_cache(tmp_path):
     """No lifetime row for the pair: no clock, `no-cache`."""
     db = oc_db(tmp_path, model=("deepseek", "deepseek-chat"))
     db.request(SID, NOW - 5, "deepseek", "deepseek-chat")
@@ -195,7 +195,7 @@ def test_t14_an_unknown_provider_reads_no_cache(tmp_path):
         "deepseek", "deepseek-chat")
 
 
-def test_t15_the_stamp_errs_old(tmp_path):
+def test_the_stamp_errs_old(tmp_path):
     # First step: the message's creation, not the step-start 3 s later.
     db = oc_db(tmp_path / "a", model=("anthropic", "claude-x"))
     db.request(SID, NOW - 297, "anthropic", "claude-x", created=NOW - 300)
@@ -217,7 +217,7 @@ def test_t15_the_stamp_errs_old(tmp_path):
     assert clock.kind == "warm" and clock.age_seconds == pytest.approx(100, abs=0.01)
 
 
-def test_t16_a_compaction_and_a_child_session_do_not_move_the_clock(tmp_path):
+def test_a_compaction_and_a_child_session_do_not_move_the_clock(tmp_path):
     db = oc_db(tmp_path, model=("anthropic", "claude-x"))
     db.request(SID, NOW - 400, "anthropic", "claude-x")
     db.request(SID, NOW - 10, "anthropic", "claude-x", agent="compaction", user=False)
@@ -234,7 +234,7 @@ def fresh_session(tmp_path, **kw) -> OcDb:
     return db
 
 
-def test_t17_the_launchers_own_new_session_is_fresh(tmp_path):
+def test_the_launchers_own_new_session_is_fresh(tmp_path):
     db = fresh_session(tmp_path)
     assert oc_read(db, turned=False).kind == "fresh"
     assert oc_read(db, turned=True).kind == "unknown"
@@ -245,7 +245,7 @@ def test_t17_the_launchers_own_new_session_is_fresh(tmp_path):
                                   "missing-column", "no-session", "missing-db",
                                   "unreadable-db", "locked-db", "no-part-table",
                                   "no-source"])
-def test_t17_each_witness_that_fails_is_unknown(tmp_path, case):
+def test_each_witness_that_fails_is_unknown(tmp_path, case):
     if case == "missing-column":
         db = OcDb(tmp_path / "db" / "o.db",
                   SCHEMA.replace("`tokens_cache_write` integer DEFAULT 0 NOT NULL,", ""))
@@ -309,7 +309,7 @@ def test_t17_each_witness_that_fails_is_unknown(tmp_path, case):
         assert clock.reason == opencode.UNSHAPED_ROWS
 
 
-def test_t17_the_session_rows_step_needs_only_the_session_tables_shape(tmp_path):
+def test_the_session_rows_step_needs_only_the_session_tables_shape(tmp_path):
     """A free next pair from the session row's model needs the shape of `session`, not
     of `message` or `part`; the full read needs all three."""
     schema = SCHEMA.split("CREATE TABLE `part`")[0] + \
@@ -323,7 +323,7 @@ def test_t17_the_session_rows_step_needs_only_the_session_tables_shape(tmp_path)
     assert clock.kind == "unknown" and "no `part` table" in clock.reason
 
 
-def test_t17a_the_pairs_under_the_wildcard_row(tmp_path):
+def test_the_pairs_under_the_wildcard_row(tmp_path):
     def read(**kw):
         return oc_read(db, **kw)
     # A last request on claude-A with the session's model now claude-B: cold.
@@ -373,7 +373,7 @@ def test_t17a_the_pairs_under_the_wildcard_row(tmp_path):
     assert clock.kind == "unknown" and clock.reason == opencode.NO_PAIR
 
 
-def test_t18_the_authorizer_refuses_account_and_credential(tmp_path):
+def test_the_authorizer_refuses_account_and_credential(tmp_path):
     db = oc_db(tmp_path)
     conn = opencode.connect(db.path)
     try:
@@ -387,7 +387,7 @@ def test_t18_the_authorizer_refuses_account_and_credential(tmp_path):
         conn.close()
 
 
-def test_t32_a_revert_pending_is_unknown_with_and_without_a_request(tmp_path):
+def test_a_revert_pending_is_unknown_with_and_without_a_request(tmp_path):
     """The `revert` value is the one a real revert on OpenCode 1.18.34 wrote on
     2026-10-06 (two prompts on opencode/big-pickle in an isolated data dir, then
     `POST /session/:id/revert` at the second user message): `{"messageID": ...}`, the
@@ -408,7 +408,7 @@ def test_t32_a_revert_pending_is_unknown_with_and_without_a_request(tmp_path):
     db = fresh_session(tmp_path / "b", revert=revert)
     assert oc_read(db, turned=False).reason == opencode.REVERT
 
-# ================================================================ free models (T34)
+# ====================================================================== free models
 
 def free_db(tmp_path, *, last=("opencode", "big-pickle"), age=600, model=...,
             **session) -> OcDb:
@@ -424,7 +424,7 @@ def free_db(tmp_path, *, last=("opencode", "big-pickle"), age=600, model=...,
     "no-request-fresh", "revert-by-session-row", "unshaped-row-by-session-row",
     "agent-no-source", "agent-missing-db", "agent-bad-db", "no-id-new-session",
     "no-id-no-new-session"])
-def test_t34_a_known_free_next_pair_is_no_cache_at_any_age(tmp_path, case):
+def test_a_known_free_next_pair_is_no_cache_at_any_age(tmp_path, case):
     agent = BUILD_NULL
     source = ...
     sid = SID
@@ -468,7 +468,7 @@ def test_t34_a_known_free_next_pair_is_no_cache_at_any_age(tmp_path, case):
 
 @pytest.mark.parametrize("case", ["no-agent-model", "null-model-no-db", "bad-session-model",
                                   "user-model-revert", "user-model-unshaped", "no-table"])
-def test_t34_a_free_model_that_cannot_be_read_as_next_is_unknown(tmp_path, case):
+def test_a_free_model_that_cannot_be_read_as_next_is_unknown(tmp_path, case):
     agent, source = BUILD_NULL, ...
     if case == "no-agent-model":
         db, agent = free_db(tmp_path), api.MISSING
@@ -490,7 +490,7 @@ def test_t34_a_free_model_that_cannot_be_read_as_next_is_unknown(tmp_path, case)
     assert clock.kind == "unknown", (case, clock)
 
 
-def test_t34_a_paid_next_pair_after_a_free_one_reads_by_the_pair_rule(tmp_path):
+def test_a_paid_next_pair_after_a_free_one_reads_by_the_pair_rule(tmp_path):
     db = free_db(tmp_path, model=("anthropic", "claude-A"))
     clock = oc_read(db)
     assert clock.kind == "cold" and clock.reason == opencode.CHANGED
@@ -500,7 +500,7 @@ def test_t34_a_paid_next_pair_after_a_free_one_reads_by_the_pair_rule(tmp_path):
                                                                               "gpt-5.5")
 
 
-def test_t34_the_rule_reads_only_the_next_pair(tmp_path, monkeypatch):
+def test_the_rule_reads_only_the_next_pair(tmp_path, monkeypatch):
     """Mutation guards: a free next pair never needs the last request, and an unknown
     next pair never falls through to the last one."""
     db = free_db(tmp_path, last=("opencode", "big-pickle"), model=None)
@@ -511,11 +511,11 @@ def test_t34_the_rule_reads_only_the_next_pair(tmp_path, monkeypatch):
     assert oc_read(db, agent_model=api.MISSING).kind == "unknown"
 
 
-# ====================================================================== drift (T35)
+# ============================================================================ drift
 
 
 
-def test_t12_a_stamp_in_the_future_is_unknown(tmp_path):
+def test_a_stamp_in_the_future_is_unknown(tmp_path):
     db = OcDb(tmp_path / "oc.db")
     db.session(SID, model=("opencode", "gpt-5.6-sol"))
     db.request(SID, NOW + 6, "openai", "gpt-5.6-sol")

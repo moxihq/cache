@@ -152,7 +152,7 @@ def one_turn(age, model="gpt-5.6-terra", **kw) -> Rollout:
 
 
 @pytest.mark.parametrize("model", ["gpt-5.6-terra", "gpt-5.6-luna"])
-def test_t1_the_30_minute_rows(tmp_path, model):
+def test_the_30_minute_rows(tmp_path, model):
     root = sessions_root(tmp_path)
     one_turn(1799, model).write(root)
     clock = codex_read(root)
@@ -162,7 +162,7 @@ def test_t1_the_30_minute_rows(tmp_path, model):
     assert codex_read(root).kind == "cold"
 
 
-def test_t1_each_model_on_the_measured_row(tmp_path):
+def test_each_model_on_the_measured_row(tmp_path):
     seconds = measured_seconds()
     for model in measured_models():
         root = sessions_root(tmp_path / model)
@@ -176,7 +176,7 @@ def test_t1_each_model_on_the_measured_row(tmp_path):
 
 @pytest.mark.parametrize("model,provider", [("gpt-5.5", "openai"),
                                             ("gpt-5.6-terra", "azure")])
-def test_t2_no_row_reads_no_cache_with_the_reason(tmp_path, model, provider):
+def test_no_row_reads_no_cache_with_the_reason(tmp_path, model, provider):
     """A model with no lifetime row has no clock to count by: it reads `no-cache`, so
     mail goes live."""
     root = sessions_root(tmp_path)
@@ -187,7 +187,7 @@ def test_t2_no_row_reads_no_cache_with_the_reason(tmp_path, model, provider):
     assert clock.age_seconds == pytest.approx(10, abs=0.1)
 
 
-def test_t3_a_turn_context_naming_another_model_after_the_record_is_cold(tmp_path):
+def test_a_turn_context_naming_another_model_after_the_record_is_cold(tmp_path):
     root = sessions_root(tmp_path)
     r = one_turn(60)
     r.start("t2", NOW - 30).context("t2", NOW - 29, "gpt-5.6-luna")
@@ -196,7 +196,7 @@ def test_t3_a_turn_context_naming_another_model_after_the_record_is_cold(tmp_pat
     assert clock.kind == "cold" and clock.reason == codex.CHANGED
 
 
-def test_t3_a_settings_line_naming_another_provider_after_the_record_is_cold(tmp_path):
+def test_a_settings_line_naming_another_provider_after_the_record_is_cold(tmp_path):
     root = sessions_root(tmp_path)
     r = one_turn(60)
     r.tsa(NOW - 20, model="gpt-5.6-terra", provider="azure")
@@ -204,7 +204,7 @@ def test_t3_a_settings_line_naming_another_provider_after_the_record_is_cold(tmp
     assert codex_read(root).reason == codex.CHANGED
 
 
-def test_t3_with_no_settings_line_the_provider_is_line_ones(tmp_path):
+def test_with_no_settings_line_the_provider_is_line_ones(tmp_path):
     root = sessions_root(tmp_path)
     one_turn(60).write(root)
     assert codex_read(root).kind == "warm"
@@ -214,7 +214,7 @@ def test_t3_with_no_settings_line_the_provider_is_line_ones(tmp_path):
 
 
 @pytest.mark.parametrize("thread", [OTHER, None], ids=["another-thread", "no-thread"])
-def test_t3_a_settings_line_of_another_thread_is_unknown(tmp_path, thread):
+def test_a_settings_line_of_another_thread_is_unknown(tmp_path, thread):
     root = sessions_root(tmp_path)
     r = Rollout().tsa(NOW - 200, thread=thread)
     r.turn("t1", NOW - 100)
@@ -224,7 +224,7 @@ def test_t3_a_settings_line_of_another_thread_is_unknown(tmp_path, thread):
 
 
 @pytest.mark.parametrize("line", ["context", "settings"])
-def test_t3_a_next_model_that_cannot_be_read_is_unknown(tmp_path, line):
+def test_a_next_model_that_cannot_be_read_is_unknown(tmp_path, line):
     root = sessions_root(tmp_path)
     r = one_turn(60)
     if line == "context":
@@ -237,7 +237,7 @@ def test_t3_a_next_model_that_cannot_be_read_is_unknown(tmp_path, line):
     assert clock.kind == "unknown" and clock.reason == codex.NO_PAIR
 
 
-def test_t35_a_scan_that_reaches_the_limit_stops_judging_there(tmp_path, monkeypatch):
+def test_a_scan_that_reaches_the_limit_stops_judging_there(tmp_path, monkeypatch):
     """R_prev's provider is line 1's only when the scan reached line 1: a settings line
     could sit in what the limit left unread."""
     gap = measured_seconds() - 1200
@@ -257,7 +257,7 @@ def test_t35_a_scan_that_reaches_the_limit_stops_judging_there(tmp_path, monkeyp
     assert drift_read(tmp_path / "whole", r).lowering is not None
 
 
-def test_t3_a_record_whose_turn_has_no_turn_context_is_unknown(tmp_path):
+def test_a_record_whose_turn_has_no_turn_context_is_unknown(tmp_path):
     root = sessions_root(tmp_path)
     r = Rollout().turn("t0", NOW - 500)          # an earlier turn_context in the file
     r.start("t1", NOW - 100).record("t1", NOW - 90)
@@ -266,8 +266,8 @@ def test_t3_a_record_whose_turn_has_no_turn_context_is_unknown(tmp_path):
     assert clock.kind == "unknown" and clock.reason == codex.NO_PAIR
 
 
-def test_t3_a_scan_that_reaches_the_limit_before_its_evidence_is_unknown(tmp_path,
-                                                                         monkeypatch):
+def test_a_scan_that_reaches_the_limit_before_its_evidence_is_unknown(tmp_path,
+                                                                      monkeypatch):
     root = sessions_root(tmp_path)
     r = Rollout().start("t1", NOW - 100).context("t1", NOW - 99)
     for n in range(400):
@@ -280,7 +280,7 @@ def test_t3_a_scan_that_reaches_the_limit_before_its_evidence_is_unknown(tmp_pat
     assert clock.kind == "unknown" and "MB" in clock.reason
 
 
-def test_t4_a_record_of_another_session_does_not_move_the_clock(tmp_path):
+def test_a_record_of_another_session_does_not_move_the_clock(tmp_path):
     root = sessions_root(tmp_path)
     r = one_turn(600)
     r.record("t1", NOW - 10, session=f"guardian:{TID}")
@@ -289,7 +289,7 @@ def test_t4_a_record_of_another_session_does_not_move_the_clock(tmp_path):
     assert clock.age_seconds == pytest.approx(600, abs=0.1)
 
 
-def test_t5_a_compactions_record_moves_the_clock(tmp_path):
+def test_a_compactions_record_moves_the_clock(tmp_path):
     root = sessions_root(tmp_path)
     r = one_turn(1000)
     r.start("t2", NOW - 100).context("t2", NOW - 99)
@@ -299,7 +299,7 @@ def test_t5_a_compactions_record_moves_the_clock(tmp_path):
     assert codex_read(root).age_seconds == pytest.approx(50, abs=0.1)
 
 
-def test_t6_an_older_codex_with_token_count_and_no_record_is_unknown(tmp_path):
+def test_an_older_codex_with_token_count_and_no_record_is_unknown(tmp_path):
     root = sessions_root(tmp_path)
     r = Rollout().start("t1", NOW - 100).context("t1", NOW - 99)
     r.event("token_count", NOW - 90, info={"total_token_usage": {}})
@@ -320,7 +320,7 @@ def fresh_rollout() -> Rollout:
     return r.tsa(NOW - 9.4)
 
 
-def test_t7_a_whitelisted_rollout_of_the_launchers_own_thread_is_fresh(tmp_path):
+def test_a_whitelisted_rollout_of_the_launchers_own_thread_is_fresh(tmp_path):
     root = sessions_root(tmp_path)
     fresh_rollout().write(root)
     assert codex_read(root, turned=False).kind == "fresh"
@@ -340,14 +340,14 @@ def test_t7_a_whitelisted_rollout_of_the_launchers_own_thread_is_fresh(tmp_path)
                             "turn_id": "t1", "usage": {}}),
 ], ids=["assistant", "reasoning", "agent-item", "task-complete", "turn-aborted",
         "token-count", "compacted", "other-record"])
-def test_t7_one_line_off_the_fresh_whitelist_is_unknown(tmp_path, extra):
+def test_one_line_off_the_fresh_whitelist_is_unknown(tmp_path, extra):
     root = sessions_root(tmp_path)
     fresh_rollout().add(extra[0], NOW - 5, extra[1]).write(root)
     clock = codex_read(root, turned=False)
     assert clock.kind == "unknown", extra
 
 
-def test_t7_a_cli_version_the_reader_was_not_checked_against_is_unknown(tmp_path):
+def test_a_cli_version_the_reader_was_not_checked_against_is_unknown(tmp_path):
     root = sessions_root(tmp_path)
     r = fresh_rollout()
     r.lines[0]["payload"]["cli_version"] = "0.154.0"
@@ -369,7 +369,7 @@ def test_t7_a_cli_version_the_reader_was_not_checked_against_is_unknown(tmp_path
                 "payload": {"type": "brand_new_item"}}),
     json.dumps({"type": "turn_context", "payload": {}}),
 ], ids=["unparseable", "top-kind", "event-kind", "item-kind", "no-timestamp"])
-def test_t7a_a_line_the_reader_does_not_recognise_is_unknown(tmp_path, bad, where):
+def test_a_line_the_reader_does_not_recognise_is_unknown(tmp_path, bad, where):
     root = sessions_root(tmp_path)
     r = Rollout()
     if where == "before":
@@ -384,7 +384,7 @@ def test_t7a_a_line_the_reader_does_not_recognise_is_unknown(tmp_path, bad, wher
         assert clock.kind == "unknown", (where, turned)
 
 
-def test_t7a_a_last_line_being_written_is_skipped_but_a_whole_one_is_judged(tmp_path):
+def test_a_last_line_being_written_is_skipped_but_a_whole_one_is_judged(tmp_path):
     root = sessions_root(tmp_path)
     r = one_turn(60)
     r.raw_tail = '{"timestamp": "2026-10-05T20:55:2'          # no newline, no parse
@@ -396,7 +396,7 @@ def test_t7a_a_last_line_being_written_is_skipped_but_a_whole_one_is_judged(tmp_
     assert codex_read(root).kind == "unknown"
 
 
-def test_t7a_the_lists_are_pinned():
+def test_the_lists_are_pinned():
     assert codex.TOP_KINDS == ("session_meta", "turn_context", "world_state",
                                      "token_usage_record", "compacted", "event_msg",
                                      "response_item")
@@ -420,7 +420,7 @@ def test_t7a_the_lists_are_pinned():
     assert opencode.CHECKED_VERSIONS == ("1.18.34",)
 
 
-def test_t8_no_rollout_file(tmp_path):
+def test_no_rollout_file(tmp_path):
     root = sessions_root(tmp_path)
     assert codex_read(root, turned=False).kind == "fresh"
     assert codex_read(root, turned=True).kind == "unknown"
@@ -435,7 +435,7 @@ def test_t8_no_rollout_file(tmp_path):
         locked.chmod(0o700)
 
 
-def test_t8a_finding_the_rollout(tmp_path):
+def test_finding_the_rollout(tmp_path):
     root = sessions_root(tmp_path)
     # A file for another thread whose id shares a prefix is not a candidate.
     Rollout(TID_B).turn("t1", NOW - 100).write(root)
@@ -446,7 +446,7 @@ def test_t8a_finding_the_rollout(tmp_path):
 
 @pytest.mark.parametrize("turned", [True, False])
 @pytest.mark.parametrize("which", ["old", "new"])
-def test_t8a_a_reverted_thread_with_two_files_is_unknown(tmp_path, which, turned):
+def test_a_reverted_thread_with_two_files_is_unknown(tmp_path, which, turned):
     root = sessions_root(tmp_path)
     old = Rollout() if which == "new" else one_turn(60)
     old.write(root)
@@ -461,14 +461,14 @@ def test_t8a_a_reverted_thread_with_two_files_is_unknown(tmp_path, which, turned
     assert clock.kind == "unknown" and clock.reason == codex.SPLIT
 
 
-def test_t8a_a_jsonl_beside_its_zst_is_unknown(tmp_path):
+def test_a_jsonl_beside_its_zst_is_unknown(tmp_path):
     root = sessions_root(tmp_path)
     one_turn(60).write(root)
     one_turn(60).write(root, zst=True)
     assert codex_read(root).reason == codex.SPLIT
 
 
-def test_t9_new_session_with_no_id_is_fresh_and_only_then(tmp_path):
+def test_new_session_with_no_id_is_fresh_and_only_then(tmp_path):
     root = sessions_root(tmp_path)
     assert codex_read(root, tid=None, new_session=True).kind == "fresh"
     assert codex_read(root, tid=None, new_session=False).kind == "unknown"
@@ -477,7 +477,7 @@ def test_t9_new_session_with_no_id_is_fresh_and_only_then(tmp_path):
         "ignored once an id is reported"
 
 
-def test_t10_a_lone_zst_is_cold_with_no_age(tmp_path):
+def test_a_lone_zst_is_cold_with_no_age(tmp_path):
     root = sessions_root(tmp_path)
     one_turn(60).write(root, zst=True)
     clock = codex_read(root)
@@ -485,7 +485,7 @@ def test_t10_a_lone_zst_is_cold_with_no_age(tmp_path):
     assert clock.reason == codex.COMPRESSED
 
 
-def test_t11_unreadable_and_scan_limit_and_no_stamp(tmp_path, monkeypatch):
+def test_unreadable_and_scan_limit_and_no_stamp(tmp_path, monkeypatch):
     root = sessions_root(tmp_path)
     path = one_turn(60).write(root)
     path.chmod(0)
@@ -509,7 +509,7 @@ def test_t11_unreadable_and_scan_limit_and_no_stamp(tmp_path, monkeypatch):
     assert codex_read(root).reason == codex.NO_STAMP
 
 
-def test_t12_a_stamp_in_the_future_is_unknown(tmp_path):
+def test_a_stamp_in_the_future_is_unknown(tmp_path):
     root = sessions_root(tmp_path)
     Rollout().turn("t1", NOW + 1, length=5).write(root)        # ends 6 s ahead
     clock = codex_read(root)
@@ -531,7 +531,7 @@ def test_t12_a_stamp_in_the_future_is_unknown(tmp_path):
     {"id": OTHER}, {"session_id": OTHER}, {"history_mode": "lineage"},
 ], ids=["history_base", "forked_from_id", "forked_from_ordinal", "parent_thread",
         "subagent_start", "unknown-key", "other-id", "other-session", "history-mode"])
-def test_t31_a_session_meta_that_is_not_the_whole_history_is_unknown(tmp_path, change):
+def test_a_session_meta_that_is_not_the_whole_history_is_unknown(tmp_path, change):
     root = sessions_root(tmp_path)
     one_turn(60, **change).write(root)
     for turned in (True, False):
@@ -543,7 +543,7 @@ def test_t31_a_session_meta_that_is_not_the_whole_history_is_unknown(tmp_path, c
     assert codex_read(root, turned=False).kind == "unknown"
 
 
-def test_t31_a_second_session_meta_and_a_line_one_that_is_not_one(tmp_path):
+def test_a_second_session_meta_and_a_line_one_that_is_not_one(tmp_path):
     root = sessions_root(tmp_path)
     r = one_turn(60)
     r.lines.insert(3, dict(r.lines[0]))
@@ -604,7 +604,7 @@ def drift_read(tmp_path, rollout, *, drift=None, bound_at=0.0, judged=None, now=
                       bound_at=bound_at, judged=judged)
 
 
-def test_t35_a_cold_landing_lowers_and_the_same_read_uses_it(tmp_path):
+def test_a_cold_landing_lowers_and_the_same_read_uses_it(tmp_path):
     seconds = measured_seconds()
     gap = seconds - 1200
     clock = drift_read(tmp_path, drifting(gap))
@@ -623,7 +623,7 @@ def test_t35_a_cold_landing_lowers_and_the_same_read_uses_it(tmp_path):
 @pytest.mark.parametrize("case", ["warm", "under-floor", "at-lifetime", "not-first",
                                   "other-pair", "settings-between", "registered-after",
                                   "small-prompt", "no-bound-at"])
-def test_t35_each_of_these_lowers_nothing(tmp_path, case):
+def test_each_of_these_lowers_nothing(tmp_path, case):
     seconds = measured_seconds()
     gap, kw, read_kw = seconds - 1200, {}, {}
     if case == "warm":
@@ -651,19 +651,19 @@ def test_t35_each_of_these_lowers_nothing(tmp_path, case):
 
 @pytest.mark.parametrize("breaker", sorted(BREAKERS))
 @pytest.mark.parametrize("where", ["earlier", "between", "this-turn"])
-def test_t35_a_turn_that_is_not_a_normal_continuation_lowers_nothing(tmp_path, breaker,
-                                                                     where):
+def test_a_turn_that_is_not_a_normal_continuation_lowers_nothing(tmp_path, breaker,
+                                                                 where):
     clock = drift_read(tmp_path, drifting(measured_seconds() - 1200,
                                           breaker=BREAKERS[breaker], where=where))
     assert clock.lowering is None
 
 
-def test_t35_a_row_not_marked_measured_is_never_lowered(tmp_path):
+def test_a_row_not_marked_measured_is_never_lowered(tmp_path):
     clock = drift_read(tmp_path, drifting(1700, model="gpt-5.6-terra"))
     assert clock.lowering is None and clock.ttl_seconds == 1800 and clock.kind == "warm"
 
 
-def test_t35_a_cold_landing_under_the_floor_is_a_journal_line_only(tmp_path):
+def test_a_cold_landing_under_the_floor_is_a_journal_line_only(tmp_path):
     clock = drift_read(tmp_path, drifting(1500))
     assert clock.lowering is None and clock.ttl_seconds == measured_seconds()
     assert len(clock.notes) == 1 and "under the documented 30m" in clock.notes[0]
@@ -682,7 +682,7 @@ def view_of(*entries):
     return view
 
 
-def test_t35_a_longer_miss_never_raises_and_a_shorter_one_lowers_to_the_floor(tmp_path):
+def test_a_longer_miss_never_raises_and_a_shorter_one_lowers_to_the_floor(tmp_path):
     seconds = measured_seconds()
     in_force = codex.lower_to(seconds - 1200, 1800)
     view = view_of(entry(in_force))
@@ -694,23 +694,23 @@ def test_t35_a_longer_miss_never_raises_and_a_shorter_one_lowers_to_the_floor(tm
     assert clock.lowering["lifetime"] == 1800, "never below the floor"
 
 
-def test_t35_the_gap_is_measured_from_the_turns_start(tmp_path):
+def test_the_gap_is_measured_from_the_turns_start(tmp_path):
     gap = measured_seconds() - 1200
     clock = drift_read(tmp_path, drifting(gap, request_length=600))
     assert clock.lowering["gap"] == pytest.approx(gap)
     assert clock.lowering["lifetime"] == codex.lower_to(gap, 1800)
 
 
-def test_t35_only_turns_newer_than_the_judged_one_are_judged(tmp_path):
+def test_only_turns_newer_than_the_judged_one_are_judged(tmp_path):
     r = drifting(measured_seconds() - 1200)
     assert drift_read(tmp_path / "a", r).judged == (TID, "t2")
     assert drift_read(tmp_path / "b", r, judged="t2").lowering is None
     assert drift_read(tmp_path / "c", r, judged="t1").lowering is not None
 
 
-# ===================================================== the drift record as read (T36)
+# =========================================================== the drift record as read
 
-def test_t36_a_read_with_no_drift_store_reads_a_measured_row_unknown(tmp_path):
+def test_a_read_with_no_drift_store_reads_a_measured_row_unknown(tmp_path):
     root = sessions_root(tmp_path)
     one_turn(60, "gpt-5.6-sol").write(root)
     clock = api.read("codex", TID, cache_source=str(root), now=NOW)
@@ -719,7 +719,7 @@ def test_t36_a_read_with_no_drift_store_reads_a_measured_row_unknown(tmp_path):
     assert api.read("codex", TID, cache_source=str(root), now=NOW).kind == "warm"
 
 
-def test_t36_a_stale_entry_is_ignored(tmp_path):
+def test_a_stale_entry_is_ignored(tmp_path):
     root = sessions_root(tmp_path)
     one_turn(2000, "gpt-5.6-sol").write(root)
     for stale in (entry(1800, seconds=999_999), entry(1800, checked="2020-01-01")):
@@ -730,7 +730,7 @@ def test_t36_a_stale_entry_is_ignored(tmp_path):
 
 
 @pytest.mark.parametrize("bad", ["unrecognised", "above", "below", "not-int", "bool"])
-def test_t36_a_rejected_entry_holds_every_measured_read(tmp_path, bad):
+def test_a_rejected_entry_holds_every_measured_read(tmp_path, bad):
     """The fail-closed reading: a rejected entry is read like an unreadable record,
     never as the longer shipped number."""
     seconds = measured_seconds()
@@ -745,7 +745,7 @@ def test_t36_a_rejected_entry_holds_every_measured_read(tmp_path, bad):
     assert codex_read(root, drift=view).kind == "warm", "the 30-minute rows read as before"
 
 
-def test_t36_an_unreadable_record_holds_the_measured_rows_only(tmp_path):
+def test_an_unreadable_record_holds_the_measured_rows_only(tmp_path):
     path = tmp_path / "cache-drift.json"
     path.write_text("{not json")
     record = drift.load(path)
@@ -759,7 +759,7 @@ def test_t36_an_unreadable_record_holds_the_measured_rows_only(tmp_path):
     assert drift.load(tmp_path / "missing.json").entries == []
 
 
-def test_t36_a_read_writes_nothing(tmp_path):
+def test_a_read_writes_nothing(tmp_path):
     clock = drift_read(tmp_path, drifting(measured_seconds() - 1200))
     assert clock.lowering is not None
     assert not drift.record_path().exists(), "a read writes no record"

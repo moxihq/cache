@@ -1,6 +1,6 @@
 """The timer: one owner for "this session's cache reaches age T".
 
-**RULE C7: the timer decides only when to ask. The subscriber decides whether to act, on
+**The timer decides only when to ask. The subscriber decides whether to act, on
 its own reads. A timer that asks early, late, twice or not at all can waste a run or miss
 one, and cannot cause an act.**
 

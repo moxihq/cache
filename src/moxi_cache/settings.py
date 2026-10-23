@@ -6,7 +6,7 @@ tick; `segment.warn_before`, where the status line segment turns from warm to ne
 `timer.subscriber`, the user's own `[[timer.subscriber]]` tables (see `timer`).
 
 The watcher writes `segment.warn_before` and three times `watch.tick` into every clock
-record (RULE C6a, `records`), so the segment and doctor's watcher line read them from the
+record (`records`), so the segment and doctor's watcher line read them from the
 record, not from here.
 """
 

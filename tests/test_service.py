@@ -64,8 +64,8 @@ def test_install_writes_the_unit_with_this_environments_watcher(env):
 
 
 def test_the_unit_ends_the_watcher_only_on_a_stop():
-    """A stop or restart ends the watcher's process, not the timer's asks in its cgroup
-    (B11 verification [L1]): the unit sets KillMode=process, in [Service]."""
+    """A stop or restart ends the watcher's process, not the timer's asks in its cgroup:
+    the unit sets KillMode=process, in [Service]."""
     text = service.render_unit(WATCHER)
     lines = text.splitlines()
     assert lines.count("KillMode=process") == 1

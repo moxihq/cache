@@ -39,7 +39,7 @@ def test_interface_1_holds_its_names():
     assert repr(api.MISSING) == "MISSING"
 
 
-def test_the_read_signature_is_the_designs():
+def test_the_read_signature_is_fixed():
     sig = inspect.signature(api.read)
     assert list(sig.parameters) == [
         "harness", "session_id", "now", "projects_root", "turned", "cache_source",

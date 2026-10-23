@@ -210,33 +210,33 @@ def test_discovery_reads_the_entry_point_group_from_installed_metadata(tmp_path,
     finds it, loads its TIMERS, and holds run[0] to the distribution's own scripts."""
     make, find = scripts
     site = tmp_path / "site"
-    info = site / "moxi_b11probe-0.1.dist-info"
+    info = site / "moxi_sample_timers-0.1.dist-info"
     info.mkdir(parents=True)
-    (info / "METADATA").write_text("Metadata-Version: 2.1\nName: moxi-b11probe\n"
+    (info / "METADATA").write_text("Metadata-Version: 2.1\nName: moxi-sample-timers\n"
                                    "Version: 0.1\n")
     (info / "entry_points.txt").write_text(
-        "[console_scripts]\nmoxi-b11probe-run = b11probe_timers:main\n\n"
-        "[moxi.cache.timers]\nb11probe = b11probe_timers\n")
-    (site / "b11probe_timers.py").write_text(
-        "TIMERS = ({'name': 'probe', 'at': -60, 'run': ['moxi-b11probe-run', '{session}']},\n"
+        "[console_scripts]\nmoxi-sample-timers-run = sample_timers:main\n\n"
+        "[moxi.cache.timers]\nsample = sample_timers\n")
+    (site / "sample_timers.py").write_text(
+        "TIMERS = ({'name': 'probe', 'at': -60, 'run': ['moxi-sample-timers-run', '{session}']},\n"
         "          {'name': 'stranger', 'at': 0, 'run': ['moxi-cache-watch']})\n")
     monkeypatch.syspath_prepend(str(site))
     from importlib import metadata
 
-    eps = [ep for ep in metadata.entry_points(group=timer.GROUP) if ep.name == "b11probe"]
+    eps = [ep for ep in metadata.entry_points(group=timer.GROUP) if ep.name == "sample"]
     assert len(eps) == 1
-    make("moxi-b11probe-run")
+    make("moxi-sample-timers-run")
     make("moxi-cache-watch")
     probe, stranger = timer.from_modules(eps, find)
-    assert isinstance(probe, Subscription) and probe.source == "module b11probe"
-    assert probe.argv0.endswith("/scripts/moxi-b11probe-run")
+    assert isinstance(probe, Subscription) and probe.source == "module sample"
+    assert probe.argv0.endswith("/scripts/moxi-sample-timers-run")
     assert isinstance(stranger, Refusal)
-    assert "not one of the module's own console scripts (moxi-b11probe-run)" in \
+    assert "not one of the module's own console scripts (moxi-sample-timers-run)" in \
         stranger.reason
     # Resolved by moxi.paths.script, in this environment, which holds no such script.
     (unresolved, _) = timer.from_modules(eps)
     assert isinstance(unresolved, Refusal)
-    assert "moxi-b11probe-run is not installed in this environment" in unresolved.reason
+    assert "moxi-sample-timers-run is not installed in this environment" in unresolved.reason
 
 
 # --- when it asks -------------------------------------------------------------------------------
@@ -500,9 +500,9 @@ def test_the_config_is_loaded_again_when_it_changes(tmp_path, exe, caplog):
 
 
 def test_a_refusal_lasts_only_while_its_cause_does(tmp_path, caplog):
-    """B11 verification [L2]: a run[0] missing at the first tick (a venv mid-rebuild) is
-    refused, and taken up at the next tick once it is an executable file; refused again
-    when it goes. Each refusal is logged once when it appears, not once per tick."""
+    """A run[0] missing at the first tick (a venv mid-rebuild) is refused, and taken up at
+    the next tick once it is an executable file; refused again when it goes. Each refusal
+    is logged once when it appears, not once per tick."""
     caplog.set_level(logging.INFO, logger="moxi.cache")
     late = tmp_path / "bin" / "late"
     t, spawner, _ = make_timer(tmp_path, [], entries=[sub(late, name="late", at=0,
@@ -524,8 +524,8 @@ def test_a_refusal_lasts_only_while_its_cause_does(tmp_path, caplog):
 
 
 def test_a_module_installed_while_the_watcher_runs_is_taken_up(tmp_path, exe):
-    """B11 verification [L2]: the modules' subscriptions are read at each tick, as
-    `moxi cache timers` reads them, not once at the watcher's start."""
+    """The modules' subscriptions are read at each tick, as `moxi cache timers` reads
+    them, not once at the watcher's start."""
     installed: list = []
     mod = timer.check(sub(exe, name="m", at=0), source="module m",
                       resolve=lambda argv0: argv0)
@@ -540,8 +540,8 @@ def test_a_module_installed_while_the_watcher_runs_is_taken_up(tmp_path, exe):
 
 
 def test_the_watcher_and_timers_judge_by_the_same_check(own_roots, tmp_path):
-    """B11 verification [L2]'s probe: after each tick, the watcher's timer runs what
-    `moxi cache timers` lists, refused or not, at the same config and files."""
+    """After each tick, the watcher's timer runs what `moxi cache timers` lists, refused
+    or not, at the same config and files."""
     late = tmp_path / "late-bin" / "verb"
     write_cache_config(own_roots, f"""
 [[timer.subscriber]]
@@ -687,7 +687,7 @@ def test_timers_lists_subscriptions_refusals_sessions_and_next_asks(own_roots, e
 name = "on-expiry"
 at = 0
 every = 120
-requires_env = {{ MOXI_B11_UNSET_VAR = "on" }}
+requires_env = {{ MOXI_TEST_UNSET_VAR = "on" }}
 run = ["{exe}", "clear-expired", "--session", "{{session}}"]
 
 [[timer.subscriber]]
@@ -695,7 +695,7 @@ name = "before-expiry"
 at = -900
 until = 0
 every = 120
-run = ["{exe}", "keep-warm", "--session", "{{session}}"]
+run = ["{exe}", "refresh", "--session", "{{session}}"]
 
 [[timer.subscriber]]
 name = "tilde"
@@ -709,10 +709,10 @@ run = ["~/bin/x"]
     assert code == 0
     assert "subscriptions: 2" in out
     assert "on-expiry (config): at +0s from expiry, every 120s, requires " \
-           "MOXI_B11_UNSET_VAR=on" in out
+           "MOXI_TEST_UNSET_VAR=on" in out
     assert "refused: 1" in out and "tilde (config): run[0] '~/bin/x' starts with ~" in out
     assert "live sessions: 2" in out
-    assert "on-expiry: not asked: the process lacks MOXI_B11_UNSET_VAR=on" in out
+    assert "on-expiry: not asked: the process lacks MOXI_TEST_UNSET_VAR=on" in out
     assert "before-expiry: asks when the window opens, in 43m" in out
     assert "before-expiry: window open: asks at the watcher's next tick" in out
 
